@@ -20,7 +20,7 @@
 
       <div class="mode-card">
         <span class="mode-led" id="modeLed"></span>
-        <div><strong id="modeTitle">Demo observability</strong><small id="modeDetail">Representative telemetry</small></div>
+        <div><strong id="modeTitle">Browser workspace</strong><small id="modeDetail">Saved locally in this browser</small></div>
         <button class="link-btn" id="connectionButton">Configure</button>
       </div>
 
@@ -230,7 +230,7 @@
   <dialog id="connectionDialog">
     <form method="dialog" class="dialog-card small-dialog">
       <div class="dialog-head"><div><p class="eyebrow">Data source</p><h2>Connection Settings</h2></div><button class="icon-btn" value="cancel">×</button></div>
-      <label class="radio-card"><input type="radio" name="mode" value="demo" checked><span><strong>Portfolio demo</strong><small>Interactive representative infrastructure telemetry.</small></span></label>
+      <label class="radio-card"><input type="radio" name="mode" value="demo" checked><span><strong>Browser workspace</strong><small>Use alerts, incidents, hosts, and history directly with browser persistence.</small></span></label>
       <label class="radio-card"><input type="radio" name="mode" value="live"><span><strong>Live backend</strong><small>Connect to the local persistent monitoring agent.</small></span></label>
       <label class="field"><span>Backend URL</span><input id="backendUrlInput" value="http://127.0.0.1:8820"></label>
       <div class="dialog-actions"><button class="btn ghost" value="cancel">Cancel</button><button class="btn primary" type="button" id="saveConnectionButton">Save</button></div>
