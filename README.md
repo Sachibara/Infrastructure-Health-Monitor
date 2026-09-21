@@ -4,7 +4,7 @@ A portfolio-grade infrastructure observability and reliability platform for IT O
 
 ## Operating Modes
 
-- **Portfolio Demo Mode** — public static deployment with realistic host telemetry, service health, alerts, incidents, uptime, and history.
+- **Browser Workspace Mode** — public browser application with realistic host telemetry, service health, alerts, incidents, uptime, and history.
 - **Live Backend Mode** — local FastAPI + SQLite backend with psutil telemetry for the monitoring host plus explicitly configured reachability and TCP service checks.
 
 ## Core Features
