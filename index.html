@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0d111a">
+  <meta name="description" content="Infrastructure Health Monitor - host telemetry, uptime, service health, alerts, incidents, and observability.">
+  <title>Infrastructure Health Monitor</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./demo-data.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail" id="rail">
+      <div class="brand">
+        <div class="pulse-mark"><i></i><i></i><i></i></div>
+        <div><strong>InfraPulse</strong><span>Health Monitor</span></div>
+      </div>
+
+      <div class="mode-card">
+        <span class="mode-led" id="modeLed"></span>
+        <div><strong id="modeTitle">Demo observability</strong><small id="modeDetail">Representative telemetry</small></div>
+        <button class="link-btn" id="connectionButton">Configure</button>
+      </div>
+
+      <nav>
+        <button class="nav-item active" data-page="overview"><span>◫</span>Overview</button>
+        <button class="nav-item" data-page="hosts"><span>▤</span>Hosts <b id="hostCountBadge">0</b></button>
+        <button class="nav-item" data-page="services"><span>⌘</span>Services</button>
+        <button class="nav-item" data-page="alerts"><span>!</span>Alerts <b id="alertCountBadge">0</b></button>
+        <button class="nav-item" data-page="incidents"><span>◇</span>Incidents</button>
+        <button class="nav-item" data-page="history"><span>⌁</span>History</button>
+        <button class="nav-item" data-page="about"><span>i</span>About</button>
+      </nav>
+
+      <div class="rail-foot">
+        <span>Collector</span>
+        <strong>FastAPI + psutil</strong>
+        <small>Explicitly configured targets only</small>
+      </div>
+    </aside>
+
+    <section class="main">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="menu-btn" id="menuButton">☰</button>
+          <div><p id="pageEyebrow">Infrastructure posture</p><h1 id="pageTitle">Overview</h1></div>
+        </div>
+        <div class="top-actions">
+          <div class="refresh-meta"><span>Last sample</span><strong id="lastRefresh">—</strong></div>
+          <button class="btn ghost" id="refreshButton">Refresh</button>
+          <button class="btn primary" data-go="hosts">Open hosts</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page active" data-page-panel="overview">
+          <div class="status-hero">
+            <div class="hero-copy">
+              <p class="eyebrow">Reliability snapshot</p>
+              <h2>See degradation before users feel it.</h2>
+              <p>Track host health, service availability, utilization pressure, response time, alerts, and incidents from one observability workspace.</p>
+              <div class="hero-actions">
+                <button class="btn primary" data-go="hosts">Inspect infrastructure</button>
+                <button class="btn ghost" data-go="alerts">Review alerts</button>
+              </div>
+            </div>
+            <div class="health-orbit">
+              <div class="score-ring" id="scoreRing"><span>HEALTH</span><strong id="healthScore">0</strong><small>/ 100</small></div>
+              <div class="orbit-label"><span>Hosts healthy</span><strong id="healthyHostSummary">0 / 0</strong></div>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric"><span>Healthy hosts</span><strong id="statHealthy">0</strong><small>Within thresholds</small></article>
+            <article class="metric"><span>Warning</span><strong id="statWarning">0</strong><small>Needs attention</small></article>
+            <article class="metric"><span>Critical</span><strong id="statCritical">0</strong><small>Immediate review</small></article>
+            <article class="metric"><span>Open alerts</span><strong id="statAlerts">0</strong><small>Active conditions</small></article>
+            <article class="metric"><span>Avg response</span><strong id="statResponse">0 ms</strong><small>Reachable targets</small></article>
+          </div>
+
+          <div class="grid-2">
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Fleet health</p><h3>Host telemetry</h3></div><button class="link-btn" data-go="hosts">View all</button></div>
+              <div class="host-health-grid" id="hostHealthGrid"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Signal queue</p><h3>Active alerts</h3></div><button class="link-btn" data-go="alerts">Open queue</button></div>
+              <div class="alert-list" id="overviewAlerts"></div>
+            </article>
+          </div>
+
+          <div class="grid-2">
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Service state</p><h3>Availability bands</h3></div></div>
+              <div class="service-bands" id="serviceBands"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-head"><div><p class="eyebrow">Recent activity</p><h3>Events & incidents</h3></div></div>
+              <div class="event-list" id="recentEvents"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" data-page-panel="hosts">
+          <div class="section-head">
+            <div><p class="eyebrow">Infrastructure inventory</p><h2>Hosts</h2><p>Review health, reachability, telemetry pressure, uptime, location, and maintenance state.</p></div>
+            <button class="btn primary" id="addHostButton">Add host</button>
+          </div>
+          <article class="panel">
+            <div class="toolbar">
+              <div class="search"><span>⌕</span><input id="hostSearch" placeholder="Search hostname, address, role, site, platform"></div>
+              <select id="hostStateFilter"><option value="all">All health states</option><option>Healthy</option><option>Warning</option><option>Critical</option><option>Maintenance</option></select>
+              <select id="hostSiteFilter"><option value="all">All sites</option></select>
+              <button class="btn ghost" id="exportHostsButton">Export CSV</button>
+            </div>
+            <div class="host-grid" id="hostGrid"></div>
+          </article>
+        </section>
+
+        <section class="page" data-page-panel="services">
+          <div class="section-head"><div><p class="eyebrow">Dependency health</p><h2>Services</h2><p>Monitor TCP services, ownership, dependencies, uptime, and response time.</p></div></div>
+          <div class="service-grid" id="serviceGrid"></div>
+        </section>
+
+        <section class="page" data-page-panel="alerts">
+          <div class="section-head"><div><p class="eyebrow">Alert lifecycle</p><h2>Alerts</h2><p>Acknowledge, resolve, and review infrastructure conditions against configured warning and critical thresholds.</p></div></div>
+          <article class="panel">
+            <div class="toolbar">
+              <div class="search"><span>⌕</span><input id="alertSearch" placeholder="Search host, service, message, severity"></div>
+              <select id="alertSeverityFilter"><option value="all">All severities</option><option>Warning</option><option>Critical</option></select>
+              <select id="alertStatusFilter"><option value="all">All statuses</option><option>Open</option><option>Acknowledged</option><option>Resolved</option></select>
+            </div>
+            <div class="alert-table" id="alertTable"></div>
+          </article>
+        </section>
+
+        <section class="page" data-page-panel="incidents">
+          <div class="section-head"><div><p class="eyebrow">Reliability record</p><h2>Incidents</h2><p>Track service degradation, impact, ownership, duration, root-cause notes, and recovery.</p></div></div>
+          <div class="incident-grid" id="incidentGrid"></div>
+        </section>
+
+        <section class="page" data-page-panel="history">
+          <div class="section-head"><div><p class="eyebrow">Telemetry history</p><h2>History</h2><p>Review recent CPU, memory, disk, response-time, and reachability samples.</p></div></div>
+          <article class="panel">
+            <div class="history-controls">
+              <label><span>Host</span><select id="historyHost"></select></label>
+              <button class="btn ghost" id="exportHistoryButton">Export CSV</button>
+            </div>
+            <div class="spark-grid" id="sparkGrid"></div>
+            <div class="history-table-wrap">
+              <table>
+                <thead><tr><th>Timestamp</th><th>Reachable</th><th>Response</th><th>CPU</th><th>Memory</th><th>Disk</th><th>Health</th></tr></thead>
+                <tbody id="historyTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+        </section>
+
+        <section class="page" data-page-panel="about">
+          <div class="section-head"><div><p class="eyebrow">Project architecture</p><h2>About InfraPulse</h2><p>A systems reliability and observability project covering telemetry, reachability, service checks, thresholding, alert lifecycle, and historical infrastructure health.</p></div></div>
+          <div class="about-grid">
+            <article class="panel about-wide">
+              <p class="eyebrow">Live architecture</p>
+              <div class="architecture">
+                <div><strong>Observability UI</strong><span>Health, alerts & incidents</span></div><b>→</b>
+                <div><strong>FastAPI</strong><span>Monitoring & REST services</span></div><b>→</b>
+                <div><strong>psutil / socket</strong><span>Telemetry & service checks</span></div><b>→</b>
+                <div><strong>SQLite</strong><span>History & incidents</span></div>
+              </div>
+            </article>
+            <article class="panel"><p class="eyebrow">Infrastructure skills</p><div class="tag-cloud"><span>Monitoring</span><span>CPU/Memory/Disk</span><span>Uptime</span><span>TCP Checks</span><span>Thresholds</span><span>Incident Management</span></div></article>
+            <article class="panel"><p class="eyebrow">Development skills</p><div class="tag-cloud"><span>Python</span><span>FastAPI</span><span>psutil</span><span>SQLite</span><span>REST API</span><span>JavaScript</span></div></article>
+          </div>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <dialog id="hostDialog">
+    <form method="dialog" class="dialog-card" id="hostForm">
+      <div class="dialog-head"><div><p class="eyebrow">Host detail</p><h2 id="hostDialogTitle">Host</h2></div><button class="icon-btn" value="cancel">×</button></div>
+      <div class="host-detail-top">
+        <div class="host-identity">
+          <span class="host-state-dot" id="detailStateDot"></span>
+          <strong id="detailHostname">HOST</strong>
+          <code id="detailAddress">0.0.0.0</code>
+          <small id="detailRole">Role</small>
+        </div>
+        <div class="telemetry-strip" id="detailTelemetry"></div>
+      </div>
+
+      <div class="form-grid">
+        <label><span>Hostname</span><input id="editHostname"></label>
+        <label><span>Address</span><input id="editAddress"></label>
+        <label><span>Role</span><input id="editRole"></label>
+        <label><span>Site</span><input id="editSite"></label>
+        <label><span>Platform</span><input id="editPlatform"></label>
+        <label><span>TCP service ports</span><input id="editPorts" placeholder="80,443,3389"></label>
+        <label><span>Warning threshold %</span><input id="editWarning" type="number" min="1" max="100"></label>
+        <label><span>Critical threshold %</span><input id="editCritical" type="number" min="1" max="100"></label>
+      </div>
+
+      <label class="maintenance-toggle"><input type="checkbox" id="editMaintenance"><span><strong>Maintenance mode</strong><small>Suppress new alerts while planned work is in progress.</small></span></label>
+
+      <div class="detail-sections">
+        <div><h4>Services</h4><div class="mini-list" id="detailServices"></div></div>
+        <div><h4>Recent alerts</h4><div class="mini-list" id="detailAlerts"></div></div>
+      </div>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">Close</button><button class="btn primary" type="button" id="saveHostButton">Save host</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="addHostDialog">
+    <form method="dialog" class="dialog-card small-dialog" id="addHostForm">
+      <div class="dialog-head"><div><p class="eyebrow">Monitor enrollment</p><h2>Add host</h2></div><button class="icon-btn" value="cancel">×</button></div>
+      <div class="form-grid">
+        <label><span>Hostname</span><input id="newHostname" required></label>
+        <label><span>Address</span><input id="newAddress" required placeholder="192.168.1.10"></label>
+        <label><span>Role</span><input id="newRole" required placeholder="Application Server"></label>
+        <label><span>Site</span><input id="newSite" required></label>
+        <label><span>Platform</span><input id="newPlatform" required placeholder="Windows Server 2022"></label>
+        <label><span>TCP ports</span><input id="newPorts" placeholder="80,443"></label>
+      </div>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">Cancel</button><button class="btn primary" type="submit">Add monitor</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="connectionDialog">
+    <form method="dialog" class="dialog-card small-dialog">
+      <div class="dialog-head"><div><p class="eyebrow">Data source</p><h2>Connection Settings</h2></div><button class="icon-btn" value="cancel">×</button></div>
+      <label class="radio-card"><input type="radio" name="mode" value="demo" checked><span><strong>Portfolio demo</strong><small>Interactive representative infrastructure telemetry.</small></span></label>
+      <label class="radio-card"><input type="radio" name="mode" value="live"><span><strong>Live backend</strong><small>Connect to the local persistent monitoring agent.</small></span></label>
+      <label class="field"><span>Backend URL</span><input id="backendUrlInput" value="http://127.0.0.1:8820"></label>
+      <div class="dialog-actions"><button class="btn ghost" value="cancel">Cancel</button><button class="btn primary" type="button" id="saveConnectionButton">Save</button></div>
+    </form>
+  </dialog>
+
+  <div class="toast-region" id="toastRegion"></div>
+</body>
+</html>
