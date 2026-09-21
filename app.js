@@ -24,13 +24,13 @@
   function fmtTime(iso){if(!iso)return "—";const d=new Date(iso),diff=Math.max(0,Date.now()-d.getTime());if(diff<60000)return "just now";if(diff<3600000)return Math.round(diff/60000)+"m ago";if(diff<86400000)return Math.round(diff/3600000)+"h ago";return Math.round(diff/86400000)+"d ago"}
   function fmtUptime(seconds){let s=Number(seconds)||0;const d=Math.floor(s/86400),h=Math.floor((s%86400)/3600);return d?d+"d "+h+"h":h+"h"}
   function toast(title,msg="",type="info"){const n=document.createElement("div");n.className="toast "+type;n.innerHTML="<strong>"+esc(title)+"</strong><span>"+esc(msg)+"</span>";$("toastRegion").appendChild(n);setTimeout(()=>n.remove(),4200)}
-  function cloneDemo(){const saved=sessionStorage.getItem("infra_health_demo_state");if(saved){try{return JSON.parse(saved)}catch{}}return JSON.parse(JSON.stringify(window.INFRA_HEALTH_DEMO))}
-  function persistDemo(){if(state.mode==="demo")sessionStorage.setItem("infra_health_demo_state",JSON.stringify(state.data))}
+  function cloneDemo(){const saved=localStorage.getItem("infra_health_demo_state");if(saved){try{return JSON.parse(saved)}catch{}}return JSON.parse(JSON.stringify(window.INFRA_HEALTH_DEMO))}
+  function persistDemo(){if(state.mode==="demo")localStorage.setItem("infra_health_demo_state",JSON.stringify(state.data))}
   async function fetchJson(path,options={}){const c=new AbortController(),timer=setTimeout(()=>c.abort(),options.timeout||10000);try{const r=await fetch(state.backendUrl.replace(/\/$/,"")+path,{...options,signal:c.signal,headers:{"Content-Type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.detail||d.error||"Request failed ("+r.status+")");return d}finally{clearTimeout(timer)}}
   function setMode(kind,title,detail){$("modeLed").className="mode-led"+(kind?" "+kind:"");$("modeTitle").textContent=title;$("modeDetail").textContent=detail}
 
   async function loadData(showToast=false){
-    if(state.mode==="demo"){state.data=cloneDemo();state.lastRefresh=new Date();setMode("","Demo observability","Representative telemetry");renderAll();if(showToast)toast("Telemetry refreshed","Demo infrastructure state reloaded.");return}
+    if(state.mode==="demo"){state.data=cloneDemo();state.lastRefresh=new Date();setMode("","Browser workspace","Saved locally in this browser");renderAll();if(showToast)toast("Telemetry refreshed","Browser-saved infrastructure state loaded.");return}
     setMode("","Connecting…",state.backendUrl);
     try{state.data=await fetchJson("/api/bootstrap");state.lastRefresh=new Date();setMode("live","Live monitoring",state.backendUrl.replace(/^https?:\/\//,""));renderAll();if(showToast)toast("Telemetry refreshed","Latest persistent monitoring state loaded.")}
     catch(e){setMode("error","Backend unavailable",state.backendUrl.replace(/^https?:\/\//,""));toast("Could not reach monitoring backend",e.message,"error");if(!state.data){state.data=cloneDemo();renderAll()}}
@@ -147,7 +147,7 @@
   $("addHostForm").addEventListener("submit",async e=>{
     e.preventDefault();const body={hostname:$("newHostname").value.trim(),address:$("newAddress").value.trim(),role:$("newRole").value.trim(),site:$("newSite").value.trim(),platform:$("newPlatform").value.trim(),ports:$("newPorts").value.split(",").map(x=>Number(x.trim())).filter(x=>Number.isInteger(x)&&x>0&&x<65536),warning_threshold:75,critical_threshold:90,maintenance:false};
     if(state.mode==="live"){try{const h=await fetchJson("/api/hosts",{method:"POST",body:JSON.stringify(body)});$("addHostDialog").close();await loadData();toast("Host added",h.hostname)}catch(err){toast("Could not add host",err.message,"error")}return}
-    const id=Math.max(0,...state.data.hosts.map(h=>h.id))+1,h={id,...body,state:"Healthy",reachable:true,response_ms:0,cpu:0,memory:0,disk:0,uptime_seconds:0,updated_at:new Date().toISOString()};state.data.hosts.push(h);persistDemo();$("addHostDialog").close();renderAll();toast("Host added",h.hostname+" added to demo inventory.");
+    const id=Math.max(0,...state.data.hosts.map(h=>h.id))+1,h={id,...body,state:"Healthy",reachable:true,response_ms:0,cpu:0,memory:0,disk:0,uptime_seconds:0,updated_at:new Date().toISOString()};state.data.hosts.push(h);persistDemo();$("addHostDialog").close();renderAll();toast("Host added",h.hostname+" saved in this browser workspace.");
   });
 
   function downloadCsv(filename,rows){const csv=rows.map(r=>r.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(",")).join("\r\n"),blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
