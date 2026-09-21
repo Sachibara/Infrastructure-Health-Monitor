@@ -1,4 +1,4 @@
-name: Deploy Infrastructure Health Monitor Demo
+name: Deploy Infrastructure Health Monitor App
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Prepare public demo
+      - name: Prepare browser app
         run: |
           mkdir -p public
           cp index.html styles.css demo-data.js app.js public/
