@@ -1,0 +1,75 @@
+name: Infrastructure Health Monitor CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        run: python -m pip install -r backend/requirements.txt
+
+      - name: Check Python syntax
+        run: python -m py_compile backend/health_api.py
+
+      - name: Smoke test backend
+        run: |
+          python - <<'PY'
+          import importlib.util
+          from pathlib import Path
+
+          path = Path("backend/health_api.py")
+          spec = importlib.util.spec_from_file_location("health_api", path)
+          module = importlib.util.module_from_spec(spec)
+          assert spec and spec.loader
+          spec.loader.exec_module(module)
+
+          module.init_db()
+          payload = module.bootstrap()
+          assert payload["hosts"]
+          assert payload["services"]
+          assert "alerts" in payload
+          assert "samples" in payload
+          cpu, memory, disk, uptime = module.local_telemetry()
+          assert 0 <= cpu <= 100
+          assert 0 <= memory <= 100
+          assert 0 <= disk <= 100
+          assert uptime >= 0
+          print("Infrastructure Health Monitor backend smoke test passed")
+          PY
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check demo-data.js
+
+      - name: Validate UI wiring
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          js = Path("app.js").read_text(encoding="utf-8")
+          ids = set(re.findall(r'id="([^"]+)"', html))
+          refs = set(re.findall(r'\$\("([^"]+)"\)', js))
+          missing = sorted(refs - ids)
+          assert not missing, f"Missing DOM ids referenced in JS: {missing}"
+          assert 'href="./styles.css"' in html
+          assert 'src="./demo-data.js"' in html
+          assert 'src="./app.js"' in html
+          print("UI wiring passed")
+          PY
+
+      - name: Validate JSON
+        run: python -m json.tool vercel.json > /dev/null
