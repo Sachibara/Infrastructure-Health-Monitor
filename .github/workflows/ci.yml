@@ -49,26 +49,21 @@ jobs:
           print("Infrastructure Health Monitor backend smoke test passed")
           PY
 
-      - name: Check JavaScript syntax
-        run: |
-          node --check app.js
-          node --check demo-data.js
-
-      - name: Validate UI wiring
+      - name: Validate consolidation redirect
         run: |
           python - <<'PY'
-          import re
           from pathlib import Path
+
           html = Path("index.html").read_text(encoding="utf-8")
-          js = Path("app.js").read_text(encoding="utf-8")
-          ids = set(re.findall(r'id="([^"]+)"', html))
-          refs = set(re.findall(r'\$\("([^"]+)"\)', js))
-          missing = sorted(refs - ids)
-          assert not missing, f"Missing DOM ids referenced in JS: {missing}"
-          assert 'href="./styles.css"' in html
-          assert 'src="./demo-data.js"' in html
-          assert 'src="./app.js"' in html
-          print("UI wiring passed")
+          readme = Path("README.md").read_text(encoding="utf-8")
+          destination = "https://sachibara.github.io/NetOps-Command-Center/"
+
+          assert destination in html, "Redirect destination missing from index.html"
+          assert 'http-equiv="refresh"' in html, "Redirect meta tag missing"
+          assert 'rel="canonical"' in html, "Canonical link missing"
+          assert destination in readme, "README consolidation destination missing"
+          assert readme.startswith("> **Consolidated module:**"), "README consolidation notice missing"
+          print("Consolidation redirect validation passed")
           PY
 
       - name: Validate JSON
