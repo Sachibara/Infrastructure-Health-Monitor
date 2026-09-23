@@ -2,6 +2,11 @@
 
 A portfolio-grade infrastructure observability and reliability platform for IT Operations, NOC, Systems Administration, Network Support, and Infrastructure roles.
 
+
+## Public App
+
+**Live app:** https://sachibara.github.io/Infrastructure-Health-Monitor/
+
 ## Operating Modes
 
 - **Browser Workspace Mode** — public browser application with realistic host telemetry, service health, alerts, incidents, uptime, and history.
