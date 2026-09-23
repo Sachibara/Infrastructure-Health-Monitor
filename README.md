@@ -1,3 +1,5 @@
+> **Consolidated module:** This project is preserved as source/history, but its public product experience is now part of **[NetOps Enterprise](https://sachibara.github.io/NetOps-Command-Center/)**. The consolidation reduces duplicate portfolio projects and connects this capability to a shared enterprise data/workflow model.
+
 # Infrastructure Health Monitor
 
 A portfolio-grade infrastructure observability and reliability platform for IT Operations, NOC, Systems Administration, Network Support, and Infrastructure roles.
